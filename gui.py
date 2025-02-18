@@ -1,7 +1,7 @@
 import tkinter as tk
 import threading
 from linear_regression import run_linear_regression
-
+from knn import run_knn
 class MyGUI:
 
     def __init__(self):
@@ -31,6 +31,7 @@ class MyGUI:
             #threading.Thread(target=self.run_linear_regression, daemon=True).start()
         elif self.selected_algorithm.get() == 2:
             print("Logistic Regression")
+            self.root.after(0, run_knn)
         else:
             print("Choose one")
 
