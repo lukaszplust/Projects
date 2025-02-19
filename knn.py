@@ -2,7 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
 from sklearn import datasets
-from linear_regression import train_test_split
+from sklearn.model_selection import train_test_split
+#from linear_regression import train_test_split
+from matplotlib.colors import ListedColormap
+import pdb
+
 # p = 1 - manhattan distance
 
 # p = 2 - euclidan distance
@@ -36,23 +40,30 @@ class KNN:
 
     # przewiduje klase dla kazdego punktu startowego
     def predict(self, X):
+
         pred = [self._predict(x) for x in X]
         return pred
 
     def _predict(self, x):
-
         # obliczam odleglosc miedzy x, a wszystkimi punktami treningowymi
-        dist = [manhattan_distance(x, _) for _ in self.X_train]
 
+        # dla kazdego X_test obliczam odleglosc każdego X_train
+        dist = [manhattan_distance(x, _) for _ in self.X_train]
+        
         # wybieram nablizsze k
 
         # np.argsort - zwraca indeksy posortowane wedlug rosnacej odleglosci
         # [: self.k] - wybieram k indeksów odpowiadających k najblizszym punktom
-        k_ind = np.argsort(dist)[:self.k]
-
+        k_indexes = np.argsort(dist)[:self.k]
+        
         # zwracam etykiety dla k najblizszych sasiadow
         # k_nearest - etykiety k najblizszych punktow
-        k_nearest = [self.y_train[x] for x in k_ind]
+
+        # mając już indeksy k-najbliższych punktow wyznaczam dla nich y_train
+        classes_nearest = [self.y_train[x] for x in k_indexes]
+
+        #print(f"classes: {classes_nearest}")
+        # gdy już mam klasy musze zliczyć, które najczęsciej występuje
 
         # glos wiekszosci
 
@@ -63,18 +74,29 @@ class KNN:
         # ['A', 'B', 'A', 'C', 'A']
         # [('A', 3), ('B', 1), ('C', 1)]
         # w [0][0] przechowywana jest etykieta najczesciej wystepujacego
-        major = Counter(k_nearest).most_common()
+        major = Counter(classes_nearest).most_common()
 
         return major[0][0]
 
 
 def run_knn():
 
-    iris = datasets.load_wine()
+    iris = datasets.load_iris()
 
+    #print(iris.data[:5])
+    
     X, y = iris.data, iris.target
-
+    
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.2, random_state = 42)
+    """
+    print(X_train[:5])
+    print("----")
+    print(X_test[:5])
+    print("----")
+    print(y_train[:5])
+    print("----")
+    print(y_test[:5])
+    """
     #plt.figure()
     #plt.scatter(X[:, 2], X[:, 3], c=y,edgecolor='k', s=20)
     #plt.show()
@@ -93,21 +115,26 @@ def run_knn():
 
     X_test = np.array([[6, 5]]) 
     '''
-    
+
     clf = KNN(k = 3)
 
     clf.fit(X_train, y_train)
     predict = clf.predict(X_test)
-    #print(predict[0])
 
-   
+    #print(f"Predicted: {predict[0]}")
+    
     #print(f"Klasyfikacja punktu {X_test[0]}: Klasa {predict[0]}")
+    #print(X_test[0][0])
 
+    # czerwony - 0
+    # niebieski - 2
+    cmap = ListedColormap(['#FF0000','#00FF00','#0000FF'])
     plt.figure()
-    # Tworzymy scatter plot z etykietami kolorów
-    plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, edgecolor='k', s=100, cmap='coolwarm', label="Treningowe punkty")
-    # Zaznaczamy punkt testowy
-    plt.scatter(X_test[:, 0], X_test[:, 1], c='black', edgecolor='k', s=100, label="Punkt testowy", marker='X')
+    
+    # 
+    plt.scatter(X[:,2],X[:,3], c=y, cmap=cmap, edgecolor='k', s=20)
+    
+    plt.scatter(X_test[1, 0], X_test[0, 1], c='black', edgecolor='k', s=100, label="Punkt testowy", marker='X')
     plt.xlabel('Cechy 1')
     plt.ylabel('Cechy 2')
     plt.title('Wykres rozrzutu danych i punktu testowego')
