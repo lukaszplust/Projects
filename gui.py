@@ -23,7 +23,7 @@ class MyGUI:
         self.button.pack()
 
         self.root.mainloop()
-
+    #cos
     def show_message(self):
         if self.selected_algorithm.get() == 1:
             print("Linear Regression")
