@@ -2,6 +2,8 @@ import tkinter as tk
 import threading
 from linear_regression import run_linear_regression
 from knn import run_knn
+from perceptron import run_perceptron
+
 class MyGUI:
 
     def __init__(self):
@@ -19,6 +21,10 @@ class MyGUI:
         self.check = tk.Radiobutton(self.root, text= "Logistic Regression", variable = self.selected_algorithm, value = 2)
         self.check.pack()
 
+        self.is_clicked_logistic_regression = tk.IntVar()
+        self.check = tk.Radiobutton(self.root, text= "Perceptron", variable = self.selected_algorithm, value = 3)
+        self.check.pack()
+
         self.button = tk.Button(self.root, text = "Enter", command= self.show_message)
         self.button.pack()
 
@@ -32,6 +38,9 @@ class MyGUI:
         elif self.selected_algorithm.get() == 2:
             print("Logistic Regression")
             self.root.after(0, run_knn)
+        elif self.selected_algorithm.get() == 3:
+            print("Perceptron")
+            self.root.after(0, run_perceptron)    
         else:
             print("Choose one")
 
