@@ -26,7 +26,11 @@ def chebyshev_distance(x, y):
 def minkowski_distance(x, y, p):
     return (np.sum(np.abs(x - y)** p)) ** (1/p)
 
-
+distance_metrics = {
+    "Euclidean": euclidan_distance,
+    "Manhattan": manhattan_distance,
+    "Chebyshev": chebyshev_distance
+}
 
 class KNN:
 
