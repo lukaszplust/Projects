@@ -1,6 +1,8 @@
+import tkinter as tk
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 #from sklearn.model_selection import train_test_split
 
 class LinearRegression:
@@ -50,57 +52,56 @@ def train_test_split(X, y, test_size=0.2, random_state=None):
 
     return X_train, X_test, y_train, y_test  
   
-def run_linear_regression():  
-    # wygenerowanie 100 probek, n_features = 1 (jedna cecha - niezalezna) + szum  
-    X,y = datasets.make_regression(n_samples=100, n_features= 1, noise= 10, random_state =40)
+class LinearRegressionWindow:
+    def __init__(self, n_samples=200, noise=10):
+        self.root = tk.Toplevel()
+        self.root.title("Linear Regression Plot")
 
-    # podział na treningowe 80% i testowe 20%
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=40)
+        self.samples = n_samples
+        self.noise = noise
 
-    #print("Dane wejściowe (X):\n", X)
-    #print("Rzeczywiste wartości (y):\n", y)
-    #print("Dane treningowe (X_train):\n", X_train)
-    #print("Dane testowe (X_test):\n", X_test)
-    #print("Rzeczywiste wartości treningowe (y_train):\n", y_train)
-    #print("Rzeczywiste wartości testowe (y_test):\n", y_test)
-    # Create a LinearRegression object
-    model = LinearRegression()
+        # wykres matplotlib
+        self.figure, self.ax = plt.subplots(figsize=(6, 4))
+        self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
+        self.canvas.get_tk_widget().pack()
 
-    # Trenowanie modelu na zbiorze treningowym
-    model.fit(X_train, y_train)
+        # suwak
+        self.samples_slider = tk.Scale(self.root, from_=10, to=1000, orient=tk.HORIZONTAL,
+                               label="Number of Samples", command=self.on_slider_change)
+        self.samples_slider.set(n_samples)
+        self.samples_slider.pack()
 
-    # Przewidywanie wartosci na zbiorze testowym
-    y_pred = model.predict(X_test)
-    
-    #print("X_test: ", X_test)
-    #print("Predictions:", y_pred)
+        self.noise_slider = tk.Scale(self.root, from_=0, to=100, orient=tk.HORIZONTAL,
+                             label="Noise Level", command=self.on_slider_change)
+        self.noise_slider.set(noise)
+        self.noise_slider.pack()
 
-    # sortuje X_test i odpowiednie wartości y_pred
+        # początkowy wykres
+        self.update_plot()
 
-    # sortuje względem X_test
-    sorted_indices = np.argsort(X_test[:, 0])
-    X_test_sorted = X_test[sorted_indices]
-    y_pred_sorted = y_pred[sorted_indices]
+    def on_slider_change(self, val):
+        self.update_plot()
 
-    # wyświetlenie posortowanych wyników
+    def update_plot(self):
+        n_samples = self.samples_slider.get()
+        noise = self.noise_slider.get()
 
-    # flatten() dla lepszej czytelności
-    print("X_test (sorted):", X_test_sorted.flatten())
-    print("Predictions (sorted):", y_pred_sorted)
+        X, y = datasets.make_regression(n_samples=n_samples, n_features=1, noise=noise, random_state=40)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=40)
 
-    def mean_squared_error(y_test, y_pred):
-        return np.mean((y_test - y_pred) ** 2)
+        model = LinearRegression()
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
 
-    mse = mean_squared_error(y_test, y_pred)
-    print("Mean Squared Error:", mse)
+        sorted_idx = np.argsort(X_test[:, 0])
+        X_sorted = X_test[sorted_idx]
+        y_pred_sorted = y_pred[sorted_idx]
 
-    #print("Actual values:", y)
-
-    # Plotting the data and the regression line
-    plt.scatter(X_test, y_test, color="blue", label="Actual Data")
-    plt.plot(X_test, y_pred, color="red", linewidth=2, label="Regression Line")
-    plt.legend()
-    plt.xlabel("Feature (X)")
-    plt.ylabel("Target (y)")
-    plt.title("Linear Regression Model")
-    plt.show()
+        self.ax.clear()
+        self.ax.scatter(X_test, y_test, color="blue", label="Actual Data")
+        self.ax.plot(X_sorted, y_pred_sorted, color="red", linewidth=2, label="Regression Line")
+        self.ax.set_xlabel("Feature (X)")
+        self.ax.set_ylabel("Target (y)")
+        self.ax.set_title("Linear Regression")
+        self.ax.legend()
+        self.canvas.draw()
