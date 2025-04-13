@@ -1,4 +1,8 @@
 import numpy as np
+import tkinter as tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.colors import ListedColormap
+from sklearn.datasets import make_classification
 import matplotlib.pyplot as plt
 from collections import Counter
 from sklearn import datasets
@@ -34,9 +38,10 @@ distance_metrics = {
 
 class KNN:
 
-    def __init__(self, k = 3):
+    def __init__(self, k = 3, distance_func=euclidan_distance):
         # liczba najblizszych sasiadow
         self.k = k
+        self.distance_func = distance_func
 
     def fit(self, X, y):
         self.X_train = X
@@ -52,7 +57,7 @@ class KNN:
         # obliczam odleglosc miedzy x, a wszystkimi punktami treningowymi
 
         # dla kazdego X_test obliczam odleglosc każdego X_train
-        dist = [manhattan_distance(x, _) for _ in self.X_train]
+        dist = [self.distance_func(x, _) for _ in self.X_train]
         
         # wybieram nablizsze k
 
@@ -82,7 +87,7 @@ class KNN:
 
         return major[0][0]
 
-
+'''
 def run_knn():
 
     iris = datasets.load_iris()
@@ -106,7 +111,7 @@ def run_knn():
     #plt.show()
 
     # wlasny przyklad
-    '''
+    
     # Dane treningowe
     X_train = np.array([
         [2, 3],
@@ -118,7 +123,7 @@ def run_knn():
     y_train = np.array([0, 1, 1, 0, 1])
 
     X_test = np.array([[6, 5]]) 
-    '''
+    
 
     clf = KNN(k = 3)
 
@@ -147,3 +152,92 @@ def run_knn():
     
     #accuracy = np.sum(predict == y_test) / len(y_test)
     #print(accuracy)
+    '''
+class KNNWindow:
+    def __init__(self, n_samples=200, noise=0.3, k=3, distance_name="Euclidean"):
+        self.root = tk.Toplevel()
+        self.root.title("KNN Visualization")
+
+        self.samples = n_samples
+        self.noise = noise
+        self.k = k
+
+        self.distance_func = distance_metrics.get(distance_name, euclidan_distance)
+
+        self.figure, self.ax = plt.subplots(figsize=(6, 4))
+        self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
+        self.canvas.get_tk_widget().pack()
+
+        self.samples_slider = tk.Scale(self.root, from_=10, to=1000, orient=tk.HORIZONTAL,
+                                       label="Liczba próbek", command=self.update_from_slider)
+        self.samples_slider.set(n_samples)
+        self.samples_slider.pack()
+
+        self.noise_slider = tk.Scale(self.root, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL,
+                                     label="Poziom szumu", command=self.update_from_slider)
+        self.noise_slider.set(noise)
+        self.noise_slider.pack()
+
+        self.k_slider = tk.Scale(self.root, from_=1, to=15, orient=tk.HORIZONTAL,
+                                 label="Liczba sąsiadów (k)", command=self.update_from_slider)
+        self.k_slider.set(k)
+        self.k_slider.pack()
+
+        self.metric_var = tk.StringVar(value="Euclidean")
+
+        tk.Label(self.root, text="Wybierz metrykę:").pack()
+
+        tk.Radiobutton(self.root, text="Euclidean", variable=self.metric_var, value="Euclidean", command=self.update_plot).pack()
+        tk.Radiobutton(self.root, text="Manhattan", variable=self.metric_var, value="Manhattan", command=self.update_plot).pack()
+        tk.Radiobutton(self.root, text="Chebyshev", variable=self.metric_var, value="Chebyshev", command=self.update_plot).pack()
+
+        self.update_plot()
+
+    def update_from_slider(self, val):
+        self.update_plot()
+
+    def update_plot(self):
+        n_samples = self.samples_slider.get()
+        noise = self.noise_slider.get()
+        k = self.k_slider.get()
+
+        X, y = make_classification(n_samples=n_samples, n_features=2, n_redundant=0, 
+                                   n_clusters_per_class=1, n_classes=3, flip_y=noise, random_state=42)
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        distance_name = self.metric_var.get()
+        distance_func = distance_metrics.get(distance_name, euclidan_distance)
+        clf = KNN(k=k, distance_func=distance_func)
+
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+
+        cmap = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
+
+        self.ax.clear()
+
+        # tworze siatke punktów (grid) do wyświetlenia granic decyzyjnych
+        # rozdzielczość siatki
+        h = 0.3
+        x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+        y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                             np.arange(y_min, y_max, h))
+        grid_points = np.c_[xx.ravel(), yy.ravel()]
+
+        # przewiduje klasy dla każdego punktu w siatce
+        Z = clf.predict(grid_points)
+        Z = np.array(Z).reshape(xx.shape)
+
+        # wyświetlam tło z granicami decyzyjnymi
+        self.ax.contourf(xx, yy, Z, alpha=0.3, cmap=cmap)
+
+
+        self.ax.scatter(X_test[:, 0], X_test[:, 1], c=y_pred, cmap=cmap, edgecolor='k', label='Test')
+        self.ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cmap, alpha=0.3, edgecolor='k', label='Train')
+        self.ax.set_title(f'KNN (k={k}) | próbek: {n_samples} | szum: {noise:.2f}')
+        self.ax.legend()
+        self.canvas.draw()
+def run_knn(n_samples=200, noise=0.3):
+    KNNWindow(n_samples=n_samples, noise=noise / 100)

@@ -2,6 +2,7 @@ import tkinter as tk
 import threading
 #from linear_regression import run_linear_regression
 from linear_regression import LinearRegressionWindow
+from knn import KNNWindow
 from knn import run_knn
 #from perceptron import run_perceptron
 
@@ -24,13 +25,14 @@ class MyGUI:
 
         # suwak do wyboru liczby próbek
         self.sample_slider = tk.Scale(self.root, from_=10, to=1000, orient=tk.HORIZONTAL, label="Number of Samples")
-        self.sample_slider.set(200)  # domyślna wartość
-        self.sample_slider.pack()
+        
 
         # suwak do wyboru poziomu szumu
         self.noise_slider = tk.Scale(self.root, from_=0, to=100, orient=tk.HORIZONTAL, label="Noise Level")
-        self.noise_slider.set(10)
-        self.noise_slider.pack()
+
+        # DLA KNN WYBOR METRYKI!!
+        self.selected_metric = tk.StringVar(value="Euclidean")
+    
 
         #self.is_clicked_logistic_regression = tk.IntVar()
         #self.check = tk.Radiobutton(self.root, text= "Perceptron", variable = self.selected_algorithm, value = 3)
@@ -53,7 +55,7 @@ class MyGUI:
             #threading.Thread(target=self.run_linear_regression, daemon=True).start()
         elif self.selected_algorithm.get() == 2:
             print("Knn")
-            self.root.after(0, run_knn)
+            KNNWindow(n_samples, noise, k=3, distance_name=self.selected_metric.get())
         #elif self.selected_algorithm.get() == 3:
            # print("Perceptron")
            # self.root.after(0, run_perceptron)    
