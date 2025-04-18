@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 from download_models import model
 import tensorflow as tf
-from face_detection import face_recognition
-
+from face_detection import face_detection
+from face_detection import load_known_faces
 
 class_names = ['background', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 
                'traffic light', 'fire hydrant', 'N/A', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 
@@ -14,6 +14,8 @@ class_names = ['background', 'person', 'bicycle', 'car', 'motorcycle', 'airplane
                'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed', 'N/A', 'dining table', 'N/A', 'toilet', 
                'N/A', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 
                'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
+
+known_encodings, known_names = load_known_faces()
 
 # Start kamery
 cap = cv2.VideoCapture(0)
@@ -36,7 +38,7 @@ while True:
 
     h, w, _ = frame.shape
     for i in range(len(scores)):
-        if scores[i] > 0.6 and class_ids[i] == 1:  # tylko "person"
+        if scores[i] > 0.5 and class_ids[i] == 1:  # tylko "person"
             ymin, xmin, ymax, xmax = boxes[i]
             xmin = int(xmin * w)
             ymin = int(ymin * h)
@@ -48,9 +50,9 @@ while True:
             cv2.putText(frame, f"{label}: {scores[i]:.2f}", (xmin, ymin - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-            # Wytnij fragment osoby i przekaż do rozpoznawania twarzy
+            # wyciecie fragmentu osoby i przekazanie do rozpoznawania twarzy
             person_crop = frame[ymin:ymax, xmin:xmax]
-            face_recognition(person_crop)
+            face_detection(person_crop,known_encodings, known_names)
 
     cv2.imshow("Detekcja obiektów", frame)
     if cv2.waitKey(1) & 0xFF == ord("q"):

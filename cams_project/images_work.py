@@ -1,3 +1,4 @@
+'''
 import os
 import face_recognition
 
@@ -24,3 +25,4 @@ def load_known_faces():
                 print(f"Nie udało się wczytać obrazu {filename}: {e}")
     
     return known_faces, known_names
+'''

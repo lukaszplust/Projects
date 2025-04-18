@@ -3,7 +3,6 @@ import cv2
 import requests
 import os
 import tensorflow as tf
-
 MODEL_DIR = "saved_model_ssd_mobilenet_v2"
 
 if not os.path.exists(MODEL_DIR):
